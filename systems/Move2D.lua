@@ -12,19 +12,46 @@ function Move2D:onInit()
     input = 'table',
     sprite = 'table',
     [GROUP_NAME] = {
-      speed = 'number'
+      speed = 'number',
+      up = 'string',
+      left_right = 'string',
+      idle = 'string'
     }
   }
 end
 
 function Move2D:onAddToGroup(e)
   e.walking_up = false
+  e.walking_down = false
   e.walking = false
+  e.running = false
   self:validateEntity(e)
 end
 
 function Move2D:onUpdate(e, dt)
   local speed = e[GROUP_NAME].speed
+  local current_animation = e.sprite.animation
+
+  local left_right_anim = e[GROUP_NAME].left_right
+  local up_anim = e[GROUP_NAME].up
+  local down_anim = e[GROUP_NAME].down
+
+  local idle_anim = e[GROUP_NAME].idle
+  local idle_up_anim = e[GROUP_NAME].idle_up
+  local idle_down_anim = e[GROUP_NAME].idle_down
+
+  if e.input:down('run') then
+    e.running = true
+  else
+    e.running = false
+  end
+
+  if e.running then
+    speed = speed + 50
+    left_right_anim = e[GROUP_NAME].run
+    up_anim = e[GROUP_NAME].run_up
+    down_anim = e[GROUP_NAME].run_down
+  end
 
   if e.input:down('left') then
     e.x = e.x - speed * dt
@@ -33,9 +60,11 @@ function Move2D:onUpdate(e, dt)
       e:flipX()
     end
 
-    if not e.walking then
+    if not e.walking or
+      (current_animation ~= left_right_anim and not (e.input:down('down') or e.input:down('up')))
+    then
       e.walking = true
-      e:animation('walk')
+      e:animation(left_right_anim)
     end
   elseif e.input:down('right') then
     e.x = e.x + speed * dt
@@ -44,9 +73,11 @@ function Move2D:onUpdate(e, dt)
       e:flipX()
     end
 
-    if not e.walking then
+    if not e.walking or
+      (current_animation ~= left_right_anim and not (e.input:down('down') or e.input:down('up')))
+    then
       e.walking = true
-      e:animation('walk')
+      e:animation(left_right_anim)
     end
   end
 
@@ -56,15 +87,17 @@ function Move2D:onUpdate(e, dt)
     if not e.walking or not e.walking_up then
       e.walking = true
       e.walking_up = true
-      e:animation('walk_up')
+      e.walking_down = false
+      e:animation(up_anim)
     end
   elseif e.input:down('down') then
     e.y = e.y + speed * dt
 
-    if not e.walking then
+    if not e.walking or not e.walking_down then
       e.walking = true
+      e.walking_down = true
       e.walking_up = false
-      e:animation('walk')
+      e:animation(down_anim)
     end
   end
 
@@ -83,11 +116,14 @@ function Move2D:onUpdate(e, dt)
   if stopped_walking then
     e.walking = false
     e.walking_up = false
+    e.walking_down = false
 
     if e.input:released('up') then
-      e.sprite:switch('idle_up')
+      e.sprite:switch(idle_up_anim)
+    elseif e.input:released('down') then
+      e.sprite:switch(idle_down_anim)
     else
-      e.sprite:switch('idle')
+      e.sprite:switch(idle_anim)
     end
   end
 end

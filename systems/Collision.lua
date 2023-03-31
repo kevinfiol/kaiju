@@ -71,9 +71,14 @@ function Collision:onAddToGroup(e)
   self:validateEntity(e)
 
   if not e.last then
-    -- monkey-patch it in in the case that the entity is not using the `physics` system
-    -- in that case, the entity is most likely an `immovable`
-    e.last = Rectangle(e.x, e.y, e.width, e.height)
+    -- in the case that the entity is an `immovable`, e.last is irrelevant since the entity can never move
+    -- so set e.last to itself
+    -- if e[GROUP_NAME].immovable then
+      -- e.last = e
+    -- else
+      -- monkey-patch it in in the case that the entity is not using the `physics` system
+      e.last = Rectangle(e.x, e.y, e.width, e.height)
+    -- end
   end
 
   if not e[GROUP_NAME].touching then

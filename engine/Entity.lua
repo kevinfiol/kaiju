@@ -6,15 +6,10 @@ local mishape = require 'lib.mishape'
 
 local Entity = Rectangle:extend()
 
-Entity.static = {
-  noop = function() end
-}
-
 function Entity:new(class_name, opts)
   opts = opts or {}
   Entity.super.new(self, opts.x, opts.y, opts.width, opts.height)
   self.class_name = class_name
-  self.systems = {}
   self.dead = false
   self.sprite = nil
   self.input = nil

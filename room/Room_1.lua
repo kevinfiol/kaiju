@@ -4,6 +4,8 @@ local Area = require 'engine.Area'
 
 local Collision = require 'systems.Collision'
 local Move2D = require 'systems.Move2D'
+
+local Background = require 'obj.Background'
 local Player = require 'obj.Player'
 
 local Room = Object:extend()
@@ -11,6 +13,9 @@ local Room = Object:extend()
 function Room:new()
   self.area = Area(Collision, Move2D)
   self.canvas = love.graphics.newCanvas(vars.gw, vars.gh)
+  self.bg = Background()
+
+  self.area:loadTilemap('assets/maps/map.lua')
 
   self.area:queue({
     Player({ x = 100, y = 100 })
@@ -28,6 +33,7 @@ function Room:draw()
   love.graphics.setCanvas(self.canvas)
   love.graphics.clear()
 
+  -- self.bg:draw()
   self.area:draw()
   -- draw end
   love.graphics.setCanvas()
@@ -35,8 +41,9 @@ function Room:draw()
 end
 
 function Room:destroy()
-  -- self.canvas:release()
+  self.canvas:release()
   self.canvas = nil
+  self.bg:destroy()
   self.area:destroy()
   self.area = nil
 end

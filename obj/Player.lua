@@ -19,12 +19,18 @@ function Player:new(opts)
 
   self.move_2d = {
     speed = SPEED,
-    up = 'walk_up',
     left_right = 'walk',
-    idle = 'idle'
+    up = 'walk_up',
+    down = 'walk_down',
+    idle = 'idle',
+    idle_up = 'idle_up',
+    idle_down = 'idle_down',
+    run = 'run',
+    run_up = 'run_up',
+    run_down = 'run_down'
   }
 
-  self.sprite = self:loadSprite('assets/sprite/gacko.png', {
+  self.sprite = self:loadSprite('assets/sprite/grakko.png', {
     animated = true,
     width = 16,
     height = 16,
@@ -32,9 +38,14 @@ function Player:new(opts)
     initial = 'idle',
     animations = {
       idle = { frames = { {1, 1, 4, 1, 0.1} } },
-      idle_up = { frames = { {13, 1, 16, 1, 0.1} } },
-      walk = { frames = { {5, 1, 8, 1, 0.1} } },
-      walk_up = { frames = { {9, 1, 12, 1, 0.1} } },
+      idle_up = { frames = { {21, 1, 24, 1, 0.1} } },
+      idle_down = { frames = { {41, 1, 44, 1, 0.1} } },
+      walk = { frames = { {5, 1, 12, 1, 0.1} } },
+      walk_up = { frames = { {25, 1, 32, 1, 0.1} } },
+      walk_down = { frames = { {45, 1, 52, 1, 0.1} } },
+      run = { frames = { {13, 1, 20, 1, 0.1} } },
+      run_up = { frames = { {33, 1, 40, 1, 0.1} } },
+      run_down = { frames = { {53, 1, 60, 1, 0.1} } },
     }
   })
 
@@ -43,7 +54,8 @@ function Player:new(opts)
       up = { 'key:w' },
       down = { 'key:s' },
       left = { 'key:a' },
-      right = { 'key:d' }
+      right = { 'key:d' },
+      run = { 'key:n' }
     }
   })
 end

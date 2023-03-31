@@ -1,6 +1,8 @@
 local Object = require 'lib.classic'
+local Entity = require 'engine.Entity'
 local nata = require 'lib.nata'
 local lume = require 'lib.lume'
+local cartographer = require 'lib.cartographer'
 
 local Area = Object:extend()
 
@@ -15,6 +17,8 @@ local function onRemove(entity)
 end
 
 function Area:new(...)
+  self.map = nil
+
   local args = {...}
   local groups = {}
   local systems = {}
@@ -40,11 +44,20 @@ function Area:update(dt)
   self.pool:flush()
   self.pool:emit('update', dt)
 
+  if self.map then
+    self.map:update(dt)
+  end
+
   -- define when to remove entities
   self.pool:remove(shouldRemove)
 end
 
 function Area:draw()
+  -- draw tilemaps before drawing other entities
+  if self.map then
+    self.map:draw()
+  end
+
   self.pool:emit('draw')
 end
 
@@ -60,6 +73,65 @@ function Area:queue(entities)
   for _, entity in pairs(entities) do
     self.pool:queue(entity)
   end
+end
+
+function Area:loadTilemap(filename)
+  if self.map then
+    self.map = nil
+  end
+
+  local map = cartographer.load(filename)
+  local tile_width = map.tilewidth
+  local tile_height = map.tileheight
+  local width = map.width -- width in tiles
+  local height = map.height -- height in tiles
+  local collidables = {}
+
+  -- local rectangle = Entity('Wall', {
+  --   x = 16,
+  --   y = 16,
+  --   width = 16,
+  --   height = 200
+  -- })
+
+  -- -- add collision system to rectangle
+  -- rectangle.collision = {
+  --   class = 'WALL',
+  --   immovable = true
+  -- }
+
+  -- self:queue({rectangle})
+
+  -- table.insert(collidables, rectangle)
+
+  for _, layer in ipairs(map.layers) do
+    if layer.class == 'collide' or layer.class == 'wall' then
+      for _i, _gid, _tilex, _tiley, x, y in layer:getTiles() do
+        -- local rectangle = Rectangle(x, y, tile_width, tile_height)
+        local rectangle = Entity('Wall', {
+          x = x,
+          y = y,
+          width = tile_width,
+          height = tile_height
+        })
+
+        -- add collision system to rectangle
+        rectangle.collision = {
+          class = 'WALL',
+          immovable = true
+        }
+
+        table.insert(collidables, rectangle)
+      end
+    end
+  end
+
+  if #collidables > 1 then
+    -- add the newly created collidable tiles to the entity pool
+    self:queue(collidables)
+  end
+
+  self.map = map
 end
 
 return Area
