@@ -44,7 +44,7 @@ function love.load()
   love.mouse.setCursor(cursor)
 
   -- scale window
-  resize(2)
+  resize(vars.resize_scale)
 
   -- init mouse position
   vars.mouse.x, vars.mouse.y = love.mouse.getPosition()

@@ -9,6 +9,18 @@ function Rectangle:new(x, y, width, height)
   self.height = height or 0
 end
 
+function Rectangle:draw()
+  if _G.DEBUG_BOXES then
+    love.graphics.rectangle(
+      'line',
+      self.x,
+      self.y,
+      self.width,
+      self.height
+    )
+  end
+end
+
 function Rectangle:getPosition()
   return self.x, self.y
 end

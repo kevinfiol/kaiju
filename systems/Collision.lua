@@ -1,63 +1,53 @@
-local util = require 'engine.util'
-local Rectangle = require 'engine.Rectangle'
-local shash = require 'lib.shash'
+local bump = require 'lib.bump'
 local System = require 'engine.System'
 
 local GROUP_NAME = 'collision'
 
--- spatial hash
-local collisions
-
--- collision class ignores
--- by default, all classes collide with other classes
-local ignores = {
-  PLAYER = {},
-  WALL = { 'WALL' }
+local BUMP_COLLISION = {
+  TOUCH = 'touch',
+  CROSS = 'cross',
+  SLIDE = 'slide',
+  BOUNCE = 'bounce'
 }
 
--- essentially a weakMap holding properties for each entity,
--- but only in the scope of this module
--- reduces property pollution in entities
-local entity_props = {}
+local FILTER = {
+  PLAYER = { BULLET = false },
+  BULLET = { PLAYER = false },
+  WALL = { WALL = false }
+}
 
-local function isVerticallyAligned(a, b)
-  return a.y < b.y + b.height
-    and a.y + a.height > b.y
-end
-
-local function isHorizontallyAligned(a, b)
-  return a.x < b.x + b.width
-    and a.x + a.width > b.x
-end
-
-local function isOverlapping(a, b)
-  return a.x + a.width >= b.x
-    and a.x <= b.x + b.width
-    and a.y + a.height >= b.y
-    and a.y <= b.y + b.height
-end
-
-local function isTouching(a, b)
-  if isVerticallyAligned(a, b) then
-    return a.x + a.width >= b.x - 1
-      and a.x <= b.x + b.width + 1
-  elseif isHorizontallyAligned(a, b) then
-    return a.y + a.height >= b.y - 1
-      and a.y <= b.y + b.height + 1
-  end
-
-  return false
-end
+-- a weakMap holding properties for each entity
+local props = {}
 
 local Collision = System.create(GROUP_NAME)
 
-function Collision:onInit()
-  collisions = shash.new(64)
+-- https://github.com/oniietzschan/bump-niji
 
+local function defaultFilter(item, other)
+  local item_class = item[GROUP_NAME].class
+  local other_class = other[GROUP_NAME].class
+  local collision_mode = FILTER[item_class][other_class]
+
+  if collision_mode == nil then
+    -- default to touch if collision mode not specified
+    return BUMP_COLLISION.TOUCH
+  end
+
+  return collision_mode
+end
+
+function Collision:onInit()
+  self.world = bump.newWorld(16)
   self.group_name = GROUP_NAME
+
+  -- entities with the Collision system should follow this schema
   self.schema = {
-    last = 'object|nil',
+    x = 'number',
+    y = 'number',
+    width = 'number',
+    height = 'number',
     [GROUP_NAME] = {
+      -- contain_inscreen = 'boolean|nil',
       class = 'string',
       immovable = 'boolean|nil',
       events = 'object|nil',
@@ -69,34 +59,16 @@ end
 
 function Collision:onAddToGroup(e)
   self:validateEntity(e)
+  self.world:add(e, e.x, e.y, e.width, e.height)
 
-  if not e.last then
-    -- in the case that the entity is an `immovable`, e.last is irrelevant since the entity can never move
-    -- so set e.last to itself
-    -- if e[GROUP_NAME].immovable then
-      -- e.last = e
-    -- else
-      -- monkey-patch it in in the case that the entity is not using the `physics` system
-      e.last = Rectangle(e.x, e.y, e.width, e.height)
-    -- end
-  end
-
-  if not e[GROUP_NAME].touching then
-    e[GROUP_NAME].touching = {}
-  end
-
-  if not e[GROUP_NAME].transparent then
-    -- by default, solid on all sides
-    e[GROUP_NAME].transparent = {
-      top = false,
-      bottom = false,
-      left = false,
-      right = false
-    }
-  end
-
-  -- init entity properties only visible to this system
-  entity_props[e] = {
+  -- initialize props
+  props[e] = {
+    last = {
+      x = e.x,
+      y = e.y,
+      width = e.width,
+      height = e.height
+    },
     has_collided = {
       top = false,
       bottom = false,
@@ -105,127 +77,59 @@ function Collision:onAddToGroup(e)
     },
     inside_of = {}
   }
-
-  -- add to spatial hash
-  -- add 1px border to detect when "touching"
-  collisions:add(e, e.x + 1, e.y + 1, e.width + 1, e.height + 1)
 end
 
-function Collision:onRemoveFromGroup(group_name, e)
-  entity_props[e] = nil
-  collisions:remove(e)
+function Collision:onRemoveFromGroup(e)
+  self.world:remove(e)
+  props[e] = nil
 end
 
-function Collision:update(dt)
-  if dt == 0 then return end
-  local entities = self.pool.groups[GROUP_NAME].entities
+function Collision:onUpdate(e)
+  local x
+  local y
+  local cols
+  local len
 
-  for _, e in ipairs(entities) do
-    -- update spatial hash
-    -- add 1px border to detect when "touching"
-    collisions:update(e, e.x + 1, e.y + 1, e.width + 1, e.height + 1)
+  x, y, cols, len = self.world:move(e, e.x, e.y, defaultFilter)
 
-    for side, o in pairs(e[GROUP_NAME].touching) do
-      if o ~= nil and not isTouching(e, o) then
-        e[GROUP_NAME].touching[side] = nil
-        entity_props[e].has_collided[side] = false
-      end
-    end
-
-    for o, _ in pairs(entity_props[e].inside_of) do
-      -- check if still inside of other object
-      if not isOverlapping(e, o) then
-        entity_props[e].inside_of[o] = nil
-      end
-    end
+  if len > 0 then
+    -- update properties on entity
+    e.x = x
+    e.y = y
   end
 
-  for _, e in ipairs(entities) do
-    collisions:each(e, function(o)
-      if util.contains(ignores[e[GROUP_NAME].class], o[GROUP_NAME].class) then
-        -- ignore
-        return
-      end
+  -- set last position & size
+  -- todo: actually use this
+  props[e].x = e.x
+  props[e].y = e.y
+  props[e].width = e.width
+  props[e].height = e.height
 
-      local side = nil
-      local shouldCollide = not (entity_props[e].inside_of[o] or e[GROUP_NAME].immovable)
+  for _, col in pairs(cols) do
+    local events = e[GROUP_NAME].events
 
-      if isVerticallyAligned(e.last, o.last) then
-        if e.last:middleX() < o.last:middleX() then
-          -- right collision
-          if e[GROUP_NAME].transparent.right or o[GROUP_NAME].transparent.left then
-            entity_props[e].inside_of[o] = true
-            shouldCollide = false
-          end
+    if events then
+      local event = events[col.other[GROUP_NAME].class]
 
-          if shouldCollide then
-            e.x = e.x - (e.x + e.width - o.x)
-          end
-
-          side = 'right'
-        elseif e.last:middleX() > o.last:middleX() then
-          -- left collision
-          if e[GROUP_NAME].transparent.left or o[GROUP_NAME].transparent.right then
-            entity_props[e].inside_of[o] = true
-            shouldCollide = false
-          end
-
-          if shouldCollide then
-            e.x = e.x + (o.x + o.width - e.x)
-          end
-
-          side = 'left'
-        end
-
-        -- check if touching
-        if (e.x + e.width) == o.x then
-          e[GROUP_NAME].touching.right = o
-        elseif e.x == (o.x + o.width) then
-          e[GROUP_NAME].touching.left = o
-        end
-      elseif isHorizontallyAligned(e.last, o.last) then
-        if e.last:middleY() < o.last:middleY() then
-          -- bottom collision
-          if e[GROUP_NAME].transparent.bottom or o[GROUP_NAME].transparent.top then
-            entity_props[e].inside_of[o] = true
-            shouldCollide = false
-          end
-
-          if shouldCollide then
-            e.y = e.y - (e.y + e.height - o.y)
-          end
-
-          side = 'bottom'
-        elseif e.last:middleY() > o.last:middleY() then
-          -- top collision
-          if e[GROUP_NAME].transparent.top or o[GROUP_NAME].transparent.bottom then
-            entity_props[e].inside_of[o] = true
-            shouldCollide = false
-          end
-
-          if shouldCollide then
-            e.y = e.y + (o.y + o.height - e.y)
-          end
-
+      if event then
+        -- determine side of entity that was collided against
+        local side = nil
+        if col.normalY == 1 then
           side = 'top'
+        elseif col.normalY == -1 then
+          side = 'bottom'
+        elseif col.normalX == 1 then
+          side = 'left'
+        elseif col.normalX == -1 then
+          side = 'right'
         end
 
-        -- check if touching
-        if (e.y + e.height) == (o.y) then
-          e[GROUP_NAME].touching.bottom = o
-        elseif e.y == (o.y + o.height) then
-          e[GROUP_NAME].touching.top = o
-        end
+        event(col, side)
       end
-
-      if side and not entity_props[e].has_collided[side] then
-        entity_props[e].has_collided[side] = true
-        if e[GROUP_NAME].events and e[GROUP_NAME].events[o[GROUP_NAME].class] then
-          e[GROUP_NAME].events[o[GROUP_NAME].class](o, side)
-        end
-      end
-    end)
+    end
   end
+
+  self.world.freeCollisions(cols)
 end
 
 return Collision

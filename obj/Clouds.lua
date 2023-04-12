@@ -1,8 +1,8 @@
 local Object = require 'lib.classic'
 
-local Background = Object:extend()
+local Clouds = Object:extend()
 
-function Background:new()
+function Clouds:new()
   local img = love.graphics.newImage('assets/sprite/bg.png')
   local quad = love.graphics.newQuad(0, 0, 64, 64, img:getDimensions())
 
@@ -26,7 +26,7 @@ function Background:new()
   }
 end
 
-function Background:draw()
+function Clouds:draw()
   local bg = self.bg
   local half_tile_width = bg.tile.width / 2
   local increment = -(half_tile_width / (bg.tile.width)) * 1
@@ -35,7 +35,7 @@ function Background:draw()
     bg.x = 0
   end
 
-  bg.x = bg.x + increment
+  bg.x = bg.x + increment / 36
   bg.batch:clear()
   local bg_double_width = bg.width * 2 -- let's draw the bg twice, one next to the other
 
@@ -51,10 +51,10 @@ function Background:draw()
   love.graphics.draw(bg.batch)
 end
 
-function Background:destroy()
+function Clouds:destroy()
   self.bg.quad:release()
   self.bg.tile.img:release()
   self.bg = nil
 end
 
-return Background
+return Clouds

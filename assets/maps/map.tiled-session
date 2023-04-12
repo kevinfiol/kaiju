@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "C:/Users/kevin/Desktop/gamedev_inspiration/rxi/ld34/ld34_src/data/map/map.tmx",
+    "activeFile": "map.tmx",
     "expandedProjectPaths": [
     ],
     "fileStates": {
@@ -11,8 +11,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 237.5,
-                "y": 156
+                "x": 302,
+                "y": 160
             }
         },
         "C:/Users/kevin/Desktop/gamedev_inspiration/rxi/ld34/ld34_src/data/map/map.tmx#main2": {
@@ -41,24 +41,24 @@
         },
         "map.tmx": {
             "expandedGroupLayers": [
-                7,
-                4
+                4,
+                7
             ],
             "expandedObjectLayers": [
                 10
             ],
             "scale": 2,
-            "selectedLayer": 2,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 239.75,
-                "y": 136
+                "x": 216.5,
+                "y": 140.5
             }
         },
         "map.tmx#cliff_non_col": {
             "scaleInDock": 2
         },
         "map.tmx#env_collidables": {
-            "scaleInDock": 2
+            "scaleInDock": 1.5
         },
         "map.tmx#env_tbone": {
             "scaleInDock": 4,
@@ -84,8 +84,8 @@
     ],
     "project": "map.tiled-project",
     "recentFiles": [
-        "map.tmx",
         "C:/Users/kevin/Desktop/gamedev_inspiration/rxi/ld34/ld34_src/data/map/map.tmx",
+        "map.tmx",
         "grass.tsx",
         "cliff_non_collidable.tsx",
         "env_tiles.tsx",

@@ -1,5 +1,5 @@
 local Object = require 'lib.classic'
-local Entity = require 'engine.Entity'
+local Rectangle = require 'engine.Rectangle'
 local nata = require 'lib.nata'
 local lume = require 'lib.lume'
 local cartographer = require 'lib.cartographer'
@@ -7,7 +7,7 @@ local cartographer = require 'lib.cartographer'
 local Area = Object:extend()
 
 local function shouldRemove(entity)
-  return entity.dead
+  return entity and entity.dead
 end
 
 local function onRemove(entity)
@@ -83,37 +83,14 @@ function Area:loadTilemap(filename)
   local map = cartographer.load(filename)
   local tile_width = map.tilewidth
   local tile_height = map.tileheight
-  local width = map.width -- width in tiles
-  local height = map.height -- height in tiles
+  -- local width = map.width -- width in tiles
+  -- local height = map.height -- height in tiles
   local collidables = {}
-
-  -- local rectangle = Entity('Wall', {
-  --   x = 16,
-  --   y = 16,
-  --   width = 16,
-  --   height = 200
-  -- })
-
-  -- -- add collision system to rectangle
-  -- rectangle.collision = {
-  --   class = 'WALL',
-  --   immovable = true
-  -- }
-
-  -- self:queue({rectangle})
-
-  -- table.insert(collidables, rectangle)
 
   for _, layer in ipairs(map.layers) do
     if layer.class == 'collide' or layer.class == 'wall' then
       for _i, _gid, _tilex, _tiley, x, y in layer:getTiles() do
-        -- local rectangle = Rectangle(x, y, tile_width, tile_height)
-        local rectangle = Entity('Wall', {
-          x = x,
-          y = y,
-          width = tile_width,
-          height = tile_height
-        })
+        local rectangle = Rectangle(x, y, tile_width, tile_height)
 
         -- add collision system to rectangle
         rectangle.collision = {

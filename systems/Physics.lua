@@ -13,7 +13,7 @@ function Physics:onInit()
     y = 'number',
     width = 'number',
     height = 'number',
-    last = 'object',
+    last = 'object|nil',
     [GROUP_NAME] = {
       angle = 'number',
       angular_vel = 'number',

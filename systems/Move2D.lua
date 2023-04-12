@@ -1,3 +1,5 @@
+local vars = require 'vars'
+local lume = require 'lib.lume'
 local System = require 'engine.System'
 
 local GROUP_NAME = 'move_2d'
@@ -54,7 +56,11 @@ function Move2D:onUpdate(e, dt)
   end
 
   if e.input:down('left') then
-    e.x = e.x - speed * dt
+    e.x = lume.clamp(
+      e.x - speed * dt,
+      0, -- min,
+      vars.gw - e.width -- max
+    )
 
     if not e.sprite.flipX then
       e:flipX()
@@ -67,7 +73,11 @@ function Move2D:onUpdate(e, dt)
       e:animation(left_right_anim)
     end
   elseif e.input:down('right') then
-    e.x = e.x + speed * dt
+    e.x = lume.clamp(
+      e.x + speed * dt,
+      0, -- min,
+      vars.gw - e.width -- max
+    )
 
     if e.sprite.flipX then
       e:flipX()
@@ -82,7 +92,11 @@ function Move2D:onUpdate(e, dt)
   end
 
   if e.input:down('up') then
-    e.y = e.y - speed * dt
+    e.y = lume.clamp(
+      e.y - speed * dt,
+      0, -- min,
+      vars.gh - e.height -- max
+    )
 
     if not e.walking or not e.walking_up then
       e.walking = true
@@ -91,7 +105,11 @@ function Move2D:onUpdate(e, dt)
       e:animation(up_anim)
     end
   elseif e.input:down('down') then
-    e.y = e.y + speed * dt
+    e.y = lume.clamp(
+      e.y + speed * dt,
+      0, -- min,
+      vars.gh - e.height -- max
+    )
 
     if not e.walking or not e.walking_down then
       e.walking = true

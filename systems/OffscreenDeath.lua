@@ -8,10 +8,7 @@ function OffscreenDeath:onInit()
   self.group_name = GROUP_NAME
 
   self.schema = {
-    speed = 'number',
-    dead = 'boolean',
-    vector = { x = 'number', y = 'number' },
-    [GROUP_NAME] = 'table'
+    [GROUP_NAME] = function (x) return x == true end
   }
 end
 

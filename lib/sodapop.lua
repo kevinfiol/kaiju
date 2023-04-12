@@ -148,10 +148,16 @@ function Sprite:update(dt)
   end
 end
 
-function Sprite:draw(ox, oy)
-  ox, oy = ox or 0, oy or 0
+function Sprite:draw(opts)
+  opts = opts or {}
+  local ox = opts.ox or 0
+  local oy = opts.oy or 0
+  local sx = opts.sx or self.sx
+  local sy = opts.sy or self.sy
+  local radians = opts.radians ~= nil and opts.radians or self.r
+
   love.graphics.setColor(self.color)
-  self.current:draw(self.x + ox, self.y + oy, self.r, self.sx, self.sy,
+  self.current:draw(self.x + ox, self.y + oy, radians, sx, sy,
     self.flipX, self.flipY)
 end
 

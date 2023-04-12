@@ -1,10 +1,13 @@
 local Rectangle = require 'engine.Rectangle'
+local Effect = require 'engine.Effect'
 local lume = require 'lib.lume'
 local sodapop = require 'lib.sodapop'
 local baton = require 'lib.baton'
 local mishape = require 'lib.mishape'
 
 local Entity = Rectangle:extend()
+
+local function noop() end
 
 function Entity:new(class_name, opts)
   opts = opts or {}
@@ -13,6 +16,12 @@ function Entity:new(class_name, opts)
   self.dead = false
   self.sprite = nil
   self.input = nil
+
+  if opts.systems then
+    for system_name, props in pairs(opts.systems) do
+      self[system_name] = props
+    end
+  end
 end
 
 function Entity:update(dt)
@@ -26,18 +35,10 @@ function Entity:update(dt)
 end
 
 function Entity:draw()
+  Entity.super.draw(self)
+
   if self.sprite then
     self.sprite:draw()
-  end
-
-  if _G.DEBUG_BOXES then
-    love.graphics.rectangle(
-      'line',
-      self.x,
-      self.y,
-      self.width,
-      self.height
-    )
   end
 end
 
@@ -56,6 +57,8 @@ function Entity:setControls(cfg)
   return self.input
 end
 
+---@param filename string
+---@param cfg table
 function Entity:loadSprite(filename, cfg)
   cfg = cfg or {}
   cfg.offset = cfg.offset or {}
@@ -110,12 +113,25 @@ function Entity:flipY()
   self.sprite.flipY = not self.sprite.flipY
 end
 
+---@param animation string
 function Entity:animation(animation)
   if not self.sprite then return end
 
   -- dont switch if animation is already playing
   if self.sprite.animation == animation then return end
   self.sprite:switch(animation)
+end
+
+function Entity:emitEffect(effect_name, opts, onComplete)
+  opts = opts or {}
+  onComplete = onComplete or noop
+  opts.onComplete = onComplete
+
+  if not opts.host then
+    opts.host = self
+  end
+
+  Effect:add(effect_name, opts, onComplete)
 end
 
 -- debug methods
