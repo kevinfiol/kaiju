@@ -351,6 +351,62 @@ function Player:released(name)
     end
 end
 
+-- `any-` variants added by kevinfiol
+function Player:anyReleased(...)
+    local args = {...}
+    for _, v in pairs(args) do
+        if self:released(v) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function Player:anyPressed(...)
+    local args = {...}
+    for _, v in pairs(args) do
+        if self:pressed(v) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function Player:anyDown(...)
+    local args = {...}
+    for _, v in pairs(args) do
+        if self:down(v) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function Player:anyGet(...)
+    local args = {...}
+    for _, v in pairs(args) do
+        if self:get(v) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function Player:anyGetRaw(...)
+    local args = {...}
+    for _, v in pairs(args) do
+        if self:getRaw(v) then
+            return true
+        end
+    end
+
+    return false
+end
+
 --[[
     gets the currently active device (either "kbm", "joy", or "none").
     this is useful for displaying instructional text. you may have

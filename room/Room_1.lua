@@ -5,7 +5,6 @@ local Effect = require 'engine.Effect'
 
 local Collision = require 'systems.Collision'
 local Physics = require 'systems.Physics'
-local Move2D = require 'systems.Move2D'
 local Spawner = require 'systems.Spawner'
 local OffscreenDeath = require 'systems.OffscreenDeath'
 
@@ -16,7 +15,6 @@ local Room = Object:extend()
 function Room:new()
   self.area = Area(
     Collision,
-    Move2D,
     Spawner,
     Physics,
     OffscreenDeath

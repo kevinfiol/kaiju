@@ -53,6 +53,15 @@ end
 ---@param cfg table @ baton config
 ---@return table @ baton instance
 function Entity:setControls(cfg)
+  local controls = cfg.controls
+
+  -- correction if user passed { up = {}, down = {} }
+  -- instead of { controls = {} } 
+  if not controls then
+    controls = cfg
+    cfg = { controls = controls }
+  end
+
   self.input = baton.new(cfg)
   return self.input
 end
@@ -62,7 +71,9 @@ end
 function Entity:loadSprite(filename, cfg)
   cfg = cfg or {}
   cfg.offset = cfg.offset or {}
-  local new_fn = cfg.animated and sodapop.newAnimatedSprite or sodapop.newSprite
+
+  local not_animated = cfg.animated == false
+  local new_fn = not_animated and sodapop.newSprite or sodapop.newAnimatedSprite
 
   -- IMPORTANT:
   -- The Entity's `width` and `height` will determine its bounding box
@@ -89,6 +100,13 @@ function Entity:loadSprite(filename, cfg)
   -- load animations
   if cfg.animations then
     for name, animation in pairs(cfg.animations) do
+      -- correct animations if user lazily passed { 1, 2, 3 }
+      -- instead of { frames = { { 1, 2, 3} } }
+      if not animation.frames then
+        local frames = animation
+        animation = { frames = { frames } }
+      end
+
       self.sprite:addAnimation(name, lume.extend({
         image = image,
         frameWidth = width,
